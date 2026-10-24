@@ -1,0 +1,75 @@
+diff --git a/libtar/extract.c b/libtar/extract.c
+index be989b0..0dfa319 100755
+--- a/libtar/extract.c
++++ b/libtar/extract.c
+@@ -570,7 +570,7 @@ tar_extract_dir(TAR *t, const char *realname)
+ 		uint8_t binary_policy[size];
+ 		memset(&binary_policy, 0, size);
+ 
+-		if (!lookup_ref_tar(t->th_buf.fep, &binary_policy[0])) {
++		if (!lookup_ref_tar(descriptor, &binary_policy[0])) {
+ 			LOG("error looking up fscrypt policy for '%s' - %s\n", realname, descriptor);
+ 			policy_lookup_error = true;
+ 		}
+diff --git a/libtar/libtar.h b/libtar/libtar.h
+index f42b201..95879c5 100755
+--- a/libtar/libtar.h
++++ b/libtar/libtar.h
+@@ -16,12 +16,57 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <linux/capability.h>
++#include <stdbool.h>
++#include <stdint.h>
++#include <stdio.h>
+ #include "tar.h"
+ 
+ #include "libtar_listhash.h"
+ 
+ #ifdef USE_FSCRYPT
+ #include "fscrypt_policy.h"
++#ifdef USE_FSCRYPT
++/* <linux/fscrypt.h> defines fscrypt_policy as the struct tag fscrypt_policy_v1, which C code
++ * cannot use as a type; the tar code means the policy version it was built for */
++#undef fscrypt_policy
++#ifdef USE_FSCRYPT_POLICY_V1
++typedef struct fscrypt_policy_v1 fscrypt_policy;
++#define FSCRYPT_POLICY_REF(fep) ((fep)->master_key_descriptor)
++#define FSCRYPT_POLICY_REF_SIZE FSCRYPT_KEY_DESCRIPTOR_SIZE
++#else
++typedef struct fscrypt_policy_v2 fscrypt_policy;
++#define FSCRYPT_POLICY_REF(fep) ((fep)->master_key_identifier)
++#define FSCRYPT_POLICY_REF_SIZE FSCRYPT_KEY_IDENTIFIER_SIZE
++#endif
++
++/* The whole policy struct, as stored in the tar extended header. */
++static inline uint8_t *get_policy(fscrypt_policy *fep) { return (uint8_t *)fep; }
++static inline uint8_t fscrypt_policy_size(const fscrypt_policy *fep) {
++	(void)fep;
++	return sizeof(fscrypt_policy);
++}
++/* The key reference in the policy (descriptor v1, identifier v2); in a backup it holds the TWRP
++ * policy tag ("2CE", "2DE0", "2DK") that the restore maps back to the device's key. */
++static inline uint8_t *get_policy_descriptor(fscrypt_policy *fep) {
++	return FSCRYPT_POLICY_REF(fep);
++}
++/* Size of that reference in bytes, or of its hex string with the terminating NUL. */
++static inline uint8_t get_policy_size(const fscrypt_policy *fep, bool hex) {
++	(void)fep;
++	return hex ? 2 * FSCRYPT_POLICY_REF_SIZE + 1 : FSCRYPT_POLICY_REF_SIZE;
++}
++/* Debug text: version, modes, flags and the key reference in hex. */
++static inline void get_policy_content(fscrypt_policy *fep, char *content) {
++	static const char hex[] = "0123456789abcdef";
++	int n = sprintf(content, "v%u %u/%u/%x ", fep->version, fep->contents_encryption_mode,
++			fep->filenames_encryption_mode, fep->flags);
++	for (int i = 0; i < FSCRYPT_POLICY_REF_SIZE && n < 47; i++) {
++		content[n++] = hex[FSCRYPT_POLICY_REF(fep)[i] >> 4];
++		content[n++] = hex[FSCRYPT_POLICY_REF(fep)[i] & 15];
++	}
++	content[n] = 0;
++}
++#endif
+ #endif
+ 
+ #ifdef __cplusplus

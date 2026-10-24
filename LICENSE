@@ -1,0 +1,15 @@
+titan2-twrp: TWRP device tree, patches and tools for the Unihertz Titan 2
+
+Copyright (c) 2026 serlk <22211586+Serlk@users.noreply.github.com>
+
+The files of this repository are free software; you can redistribute them and/or modify them
+under the terms of the GNU General Public License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any later version. The full text is in
+LICENSES/GPL-2.0-or-later.txt.
+
+The patches in patches/ modify TWRP and AOSP sources and are under the licenses of the files they
+change (Apache-2.0 for bootable/recovery and system/vold).
+
+A TWRP build made from this repository contains TWRP and AOSP, which are under their own licenses
+(Apache-2.0, GPL-3.0 and others; see the TWRP sources: https://github.com/TeamWin and
+https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp).

@@ -1,0 +1,14 @@
+diff --git a/partitionmanager.cpp b/partitionmanager.cpp
+index 171fecc..059cc67 100755
+--- a/partitionmanager.cpp
++++ b/partitionmanager.cpp
+@@ -540,6 +540,9 @@ void TWPartitionManager::Setup_Fstab_Partitions(bool Display_Error) {
+ 
+ 	#ifdef TW_INCLUDE_CRYPTO
+ 		DataManager::SetValue(TW_IS_ENCRYPTED, 1);
++		// a device script may start the TEE services (KeyMint, Gatekeeper) the metadata
++		// decryption below needs; it runs to the end before the decryption
++		TWFunc::check_and_run_script("/system/bin/prepdecrypt.sh", "prepare decryption");
+ 		Decrypt_Data();
+ 	#endif
+ 

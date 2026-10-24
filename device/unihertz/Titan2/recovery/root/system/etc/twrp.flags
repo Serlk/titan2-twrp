@@ -1,0 +1,23 @@
+# TWRP names and flags for the Titan 2 partitions.
+# <src>                          <mnt point>    <type>  <flags>
+system                           /system_root   ext4    flags=display="System";logical;slotselect;wipeingui
+vendor                           /vendor        erofs   flags=display="Vendor";logical;slotselect
+vendor_dlkm                      /vendor_dlkm   erofs   flags=display="Vendor DLKM";logical;slotselect
+/dev/block/by-name/metadata      /metadata      f2fs    flags=display="Metadata";backup=1
+/dev/block/by-name/boot          /boot          emmc    flags=display="Boot";backup=1;flashimg=1;slotselect
+/dev/block/by-name/init_boot     /init_boot     emmc    flags=display="Init boot";backup=1;flashimg=1;slotselect
+/dev/block/by-name/vendor_boot   /vendor_boot   emmc    flags=display="Vendor boot (recovery)";backup=1;flashimg=1;slotselect
+/dev/block/by-name/dtbo          /dtbo          emmc    flags=display="DTBO";backup=1;flashimg=1;slotselect
+/dev/block/by-name/vbmeta        /vbmeta        emmc    flags=display="VBMeta";backup=1;flashimg=1;slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc    flags=display="VBMeta system";backup=1;flashimg=1;slotselect
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc    flags=display="VBMeta vendor";backup=1;flashimg=1;slotselect
+/dev/block/by-name/super         /super         emmc    flags=display="Super";backup=1;flashimg=1
+/dev/block/by-name/logo          /logo          emmc    flags=display="Boot logo";backup=1;flashimg=1
+/dev/block/by-name/nvram         /nvram         emmc    flags=display="NVRAM (IMEI)";backup=1
+/dev/block/by-name/nvdata        /nvdata        emmc    flags=display="NVDATA";backup=1
+/dev/block/by-name/nvcfg         /nvcfg         emmc    flags=display="NVCFG";backup=1
+/dev/block/by-name/protect1      /protect_f     emmc    flags=display="Protect F";backup=1
+/dev/block/by-name/protect2      /protect_s     emmc    flags=display="Protect S";backup=1
+/dev/block/by-name/proinfo       /proinfo       emmc    flags=display="Proinfo";backup=1
+/devices/platform/soc/11240000.mmc*            /external_sd  auto  flags=display="MicroSD";storage;wipeingui;removable
+/devices/platform/soc/11201000.usb0/11200000.xhci*  /usb_otg  auto  flags=display="USB OTG";storage;wipeingui;removable

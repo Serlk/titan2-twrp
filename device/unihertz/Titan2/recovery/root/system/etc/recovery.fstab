@@ -1,0 +1,35 @@
+# Titan 2 recovery fstab (TWRP). Logical partitions in super (group main), A/B.
+# <src>        <mnt point>   <type>  <mnt flags>                    <fs_mgr flags>
+system          /system_root  ext4    ro                             wait,slotselect,logical,first_stage_mount
+system_ext      /system_ext   erofs   ro                             wait,slotselect,logical,first_stage_mount
+product         /product      erofs   ro                             wait,slotselect,logical,first_stage_mount
+vendor          /vendor       erofs   ro                             wait,slotselect,logical,first_stage_mount
+vendor_dlkm     /vendor_dlkm  erofs   ro                             wait,slotselect,logical,first_stage_mount
+odm_dlkm        /odm_dlkm     erofs   ro                             wait,slotselect,logical,first_stage_mount
+system_dlkm     /system_dlkm  erofs   ro                             wait,slotselect,logical,first_stage_mount
+
+/dev/block/by-name/metadata  /metadata  f2fs  noatime,nosuid,nodev,discard  wait,check,formattable,first_stage_mount
+/dev/block/by-name/userdata  /data      f2fs  noatime,nosuid,nodev,discard,inlinecrypt  wait,check,formattable,latemount,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
+
+# raw partitions (the NV and protect ext4 ones too: backed up as images, never mounted by TWRP —
+# prepdecrypt.sh mounts protect1 for the TEE); misc holds the bootloader message (boot-recovery), cleared by TWRP on reboot
+/dev/block/by-name/misc          /misc          emmc  defaults  defaults
+/dev/block/by-name/boot          /boot          emmc  defaults  slotselect
+/dev/block/by-name/init_boot     /init_boot     emmc  defaults  slotselect
+/dev/block/by-name/vendor_boot   /vendor_boot   emmc  defaults  slotselect
+/dev/block/by-name/dtbo          /dtbo          emmc  defaults  slotselect
+/dev/block/by-name/vbmeta        /vbmeta        emmc  defaults  slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc  defaults  slotselect
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc  defaults  slotselect
+/dev/block/by-name/super         /super         emmc  defaults  defaults
+/dev/block/by-name/logo          /logo          emmc  defaults  defaults
+/dev/block/by-name/nvram         /nvram         emmc  defaults  defaults
+/dev/block/by-name/nvdata        /nvdata        emmc  defaults  defaults
+/dev/block/by-name/nvcfg         /nvcfg         emmc  defaults  defaults
+/dev/block/by-name/protect1      /protect_f     emmc  defaults  defaults
+/dev/block/by-name/protect2      /protect_s     emmc  defaults  defaults
+/dev/block/by-name/proinfo       /proinfo       emmc  defaults  defaults
+
+# removable storage
+/devices/platform/soc/11240000.mmc*            auto  auto  defaults  voldmanaged=sdcard1:auto
+/devices/platform/soc/11201000.usb0/11200000.xhci*  auto  vfat  defaults  voldmanaged=usbotg:auto

@@ -1,0 +1,9 @@
+<!-- Replaces the stock vendor_boot fragment of the same name: it is a device manifest in the
+     framework fragment directory, which makes servicemanager reject the whole framework manifest.
+     Same declaration, framework type. -->
+<manifest version="1.0" type="framework">
+    <hal format="aidl">
+        <name>android.hardware.boot</name>
+        <fqname>IBootControl/default</fqname>
+    </hal>
+</manifest>

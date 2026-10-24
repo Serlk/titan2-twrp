@@ -1,0 +1,4 @@
+<!-- Framework manifest of the recovery. servicemanager drops all framework fragments when this
+     base is missing, and with them the keystore2 declaration TWRP's decryption needs. -->
+<manifest version="1.0" type="framework">
+</manifest>

@@ -1,0 +1,9 @@
+<!-- Replaces the stock vendor_boot fragment of the same name (see
+     android.hardware.boot-service.mtk.xml). Same declaration, framework type. -->
+<manifest version="1.0" type="framework">
+    <hal format="aidl">
+        <name>android.hardware.health</name>
+        <version>2</version>
+        <fqname>IHealth/default</fqname>
+    </hal>
+</manifest>

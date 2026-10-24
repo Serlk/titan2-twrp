@@ -1,0 +1,8 @@
+# TWRP sources, build output, work files and anything taken from the stock firmware
+/src/
+/out/
+/work/
+/stock/
+/device/unihertz/Titan2/prebuilt/
+*.img
+*.ko

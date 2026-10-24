@@ -1,0 +1,5 @@
+# TWRP runs with SELinux permissive. TWRP device trees usually do it with androidboot.selinux=
+# permissive on the kernel command line, but on the Titan 2 the recovery shares the vendor_boot
+# command line and bootconfig with Android. So only the recovery policy (this one) lets init
+# switch SELinux off itself: init.recovery.mt6878.rc writes /sys/fs/selinux/enforce on early-init.
+permissive init;

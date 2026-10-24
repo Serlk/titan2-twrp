@@ -1,0 +1,49 @@
+diff --git a/crypto/fde_removed.h b/crypto/fde_removed.h
+new file mode 100644
+index 0000000..97243e5
+--- /dev/null
++++ b/crypto/fde_removed.h
+@@ -0,0 +1,21 @@
++/*
++ * Full-disk encryption (FDE) is gone from the Android 14 vold that TWRP builds against, but a few
++ * TWRP code paths still call its functions. They are only reached on devices without a key
++ * directory (FDE); FBE devices never take them. These stand-ins report "no FDE".
++ */
++#ifndef TWRP_FDE_REMOVED_H
++#define TWRP_FDE_REMOVED_H
++
++#include <libdm/dm.h>
++
++static inline void set_partition_data(const char*, const char*) {}
++/* no FDE footer */
++static inline int cryptfs_check_footer() { return -1; }
++static inline int cryptfs_get_password_type() { return -1; }
++static inline int cryptfs_check_passwd(const char*) { return -1; }
++/* the dm device of a decrypted volume ("userdata" for metadata encryption) */
++static inline int delete_crypto_blk_dev(const char* name) {
++	return android::dm::DeviceMapper::Instance().DeleteDeviceIfExists(name) ? 0 : -1;
++}
++
++#endif
+diff --git a/partition.cpp b/partition.cpp
+index 8c53567..4cc8855 100755
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -52,6 +52,7 @@
+ #ifdef TW_INCLUDE_CRYPTO
+ 	// #include "crypto/fde/cryptfs.h"
+ 	#include "cryptfs.h"
++	#include "crypto/fde_removed.h"
+ 	#include "Decrypt.h"
+ #endif
+ extern "C" {
+--- a/partitionmanager.cpp
++++ b/partitionmanager.cpp
+@@ -105,6 +105,7 @@
+ #ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
+ 	#ifdef USE_FSCRYPT
+ 	#include "cryptfs.h"
++	#include "crypto/fde_removed.h"
+ 	#include "fscrypt-common.h"
+ 	#include "MetadataCrypt.h"
+ 	#endif

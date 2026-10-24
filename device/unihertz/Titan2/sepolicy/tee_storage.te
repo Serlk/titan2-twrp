@@ -1,0 +1,8 @@
+# Labels of the TrustKernel TEE storage on protect1/protect2 as the vendor policy names them.
+# Without these types in the recovery policy the labels already on those file systems are invalid
+# here, and what teed creates in recovery (Gatekeeper records) would get "unlabeled" — which
+# Android's teed may not open: it then treats the object as corrupt and deletes it, and Gatekeeper
+# rejects the lock screen PIN. With the types, new files inherit their directory's label.
+type protect_f_data_file, file_type;
+type protect_s_data_file, file_type;
+type tkcore_protect_data_file, file_type;

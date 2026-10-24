@@ -1,0 +1,101 @@
+diff --git a/Android.bp b/Android.bp
+index 200eb67..5f31246 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -176,6 +176,7 @@ cc_library_static {
+     shared_libs: [
+         "android.hardware.confirmationui@1.0",
+         "android.hardware.gatekeeper@1.0",
++        "android.hardware.gatekeeper-V1-ndk",
+         "android.hardware.health.storage@1.0",
+         "android.hardware.health.storage-V1-ndk",
+         "android.hardware.keymaster@4.1",
+diff --git a/Decrypt.cpp b/Decrypt.cpp
+index 0a5afb0..50e3599 100755
+--- a/Decrypt.cpp
++++ b/Decrypt.cpp
+@@ -57,6 +57,7 @@
+ #include <aidl/android/system/keystore2/IKeystoreService.h>
+ #include <aidl/android/system/keystore2/ResponseCode.h>
+ #include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
++#include <aidl/android/hardware/gatekeeper/IGatekeeper.h>
+ 
+ #include <binder/IServiceManager.h>
+ #include <binder/IPCThreadState.h>
+@@ -676,6 +677,54 @@ bool Decrypt_CE_storage(const userid_t user_id, const std::string& secret) {
+ 	return true;
+ }
+ 
++// Gatekeeper verification of the synthetic password token through the AIDL Gatekeeper HAL, for
++// vendors that have no HIDL Gatekeeper 1.0 service (Android 14 vendors). Like gatekeeperd, the
++// HardwareAuthToken it returns goes to keystore2, which needs it to unwrap the spblob key.
++static bool Gatekeeper_Aidl_Verify(const userid_t user_id, const password_data_struct* pwd,
++                                   const unsigned char* password_token) {
++	namespace gk = ::aidl::android::hardware::gatekeeper;
++	::ndk::SpAIBinder binder(AServiceManager_checkService("android.hardware.gatekeeper.IGatekeeper/default"));
++	auto gk_device = gk::IGatekeeper::fromBinder(binder);
++	if (!gk_device) {
++		printf("failed to get gatekeeper service\n");
++		return false;
++	}
++	if (pwd->handle_len <= 0) {
++		printf("no password handle supplied\n");
++		return false;
++	}
++	void* gk_pwd_token = PersonalizedHashBinary(PERSONALIZATION_USER_GK_AUTH, (const char*)password_token, PASSWORD_TOKEN_SIZE);
++	if (!gk_pwd_token) {
++		printf("malloc error getting gatekeeper_key\n");
++		return false;
++	}
++	const uint8_t* handle = (const uint8_t*)pwd->password_handle;
++	std::vector<uint8_t> handle_vec(handle, handle + pwd->handle_len);
++	std::vector<uint8_t> token_vec((uint8_t*)gk_pwd_token, (uint8_t*)gk_pwd_token + SHA512_DIGEST_LENGTH);
++	free(gk_pwd_token);
++	gk::GatekeeperVerifyResponse rsp;
++	auto status = gk_device->verify(fakeUid(user_id), 0 /* challenge */, handle_vec, token_vec, &rsp);
++	if (!status.isOk()) {
++		if (status.getServiceSpecificError() == gk::IGatekeeper::ERROR_RETRY_TIMEOUT)
++			printf("GateKeeper response timeout\n");
++		else
++			printf("GateKeeper response error: %s\n", status.getDescription().c_str());
++		return false;
++	}
++	printf("GateKeeper status ok\n");
++	::ndk::SpAIBinder authz(AServiceManager_getService("android.security.authorization"));
++	auto service = ::aidl::android::security::authorization::IKeystoreAuthorization::fromBinder(authz);
++	if (!service) {
++		printf("error: could not connect to keystore service\n");
++		return false;
++	}
++	if (!service->addAuthToken(rsp.hardwareAuthToken).isOk()) {
++		printf("error: keystore did not take the auth token\n");
++		return false;
++	}
++	return true;
++}
++
+ // /* Decrypt_User_Synth_Pass is the TWRP C++ equivalent to spBasedDoVerifyCredential
+ //  * https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/LockSettingsService.java#1998 */
+ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password) {
+@@ -793,9 +842,10 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
+ 			android::sp<android::hardware::gatekeeper::V1_0::IGatekeeper> gk_device;
+ 			gk_device = ::android::hardware::gatekeeper::V1_0::IGatekeeper::getService();
+ 			if (gk_device == nullptr) {
+-				printf("failed to get gatekeeper service\n");
+-				return Free_Return(retval, weaver_key, &pwd);
+-			}
++				// no HIDL Gatekeeper: the AIDL one (Android 14 vendors)
++				if (!Gatekeeper_Aidl_Verify(user_id, &pwd, &password_token[0]))
++					return Free_Return(retval, weaver_key, &pwd);
++			} else {
+ 			if (pwd.handle_len <= 0) {
+ 				printf("no password handle supplied\n");
+ 				return Free_Return(retval, weaver_key, &pwd);
+@@ -856,6 +906,7 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
+ 				printf("gatekeeper verification failed\n");
+ 				return Free_Return(retval, weaver_key, &pwd);
+ 			}
++			}
+ 		}
+ 	}
+ 	// Now we will handle https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#816

@@ -1,0 +1,37 @@
+# Titan 2 recovery: SELinux permissive, USB gadget on the MT6878 USB controller (configfs,
+# TWRP's own USB rc).
+on early-init
+    # the command line is shared with Android: permissive is set here, init is permissive in the
+    # recovery policy only (sepolicy/twrp_permissive.te)
+    write /sys/fs/selinux/enforce 0
+
+on init
+    setprop sys.usb.configfs 1
+    setprop sys.usb.controller "11201000.usb0"
+    setprop sys.usb.ffs.aio_compat 1
+
+on fs
+    # the TWRP storage over MTP and adb need the gadget; the stock module list loads it
+    write /sys/class/leds/lcd-backlight/brightness 1600
+
+# TrustKernel TEE services for /data decryption, run from the phone's own vendor partition
+# (system/bin/prepdecrypt.sh mounts it and starts them). vendor-service.sh takes each command line
+# from the vendor init scripts; user, group and capabilities are as there.
+service titan2.teed /system/bin/vendor-service.sh teed
+    user system
+    group system
+    capabilities SYS_RAWIO
+    seclabel u:r:recovery:s0
+    disabled
+
+service titan2.keymint /system/bin/vendor-service.sh vendor.keymint-3-0-trustkernel
+    user system
+    group system
+    seclabel u:r:recovery:s0
+    disabled
+
+service titan2.gatekeeper /system/bin/vendor-service.sh vendor.gatekeeper
+    user system
+    group system
+    seclabel u:r:recovery:s0
+    disabled
