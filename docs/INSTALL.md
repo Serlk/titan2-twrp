@@ -105,8 +105,8 @@ fastboot reboot
 
 Android boots as before (TWRP is only read when booting into recovery).
 
-To enter TWRP: power off, hold **Volume Up + Power** until the bootloader menu appears
-("Select Boot Mode"), move to **Recovery Mode** with Volume Up and select it with Volume Down.
+To enter TWRP: power off, hold **Power + Func1** (the upper extra key on the side). The bootloader
+menu appears: move with the extra keys, choose **Recovery** and confirm with **Volume Up**.
 
 ---
 
@@ -128,6 +128,6 @@ To enter TWRP: power off, hold **Volume Up + Power** until the bootloader menu a
 | "Wrong PIN" in Android after TWRP | do not try again and again (Gatekeeper slows down). Connect adb and look at `logcat \| grep -i gatekeeper`; the TEE records are on `protect1` (`/mnt/vendor/protect_f/tee`): `restorecon -RF /mnt/vendor/protect_f/tee`, or restore the record from your `protect1.img` backup |
 | TWRP does not decrypt | `adb pull /tmp/recovery.log` and `adb logcat`; do not format |
 | Back to stock recovery | `fastboot flash vendor_boot_a vendor_boot_a.img` (your backup) |
-| Fastboot not reachable | power off, hold Volume Down + Power |
+| Fastboot not reachable | power off, Power + Func1, choose Fastboot (only works while no boot command is set, see the first row) |
 
 Sources and how it works: [README.md](../README.md).
